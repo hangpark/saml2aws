@@ -1,7 +1,6 @@
 package googleapps
 
 import (
-	"bufio"
 	"bytes"
 	b64 "encoding/base64"
 	"encoding/json"
@@ -385,77 +384,77 @@ func (kc *Client) loadChallengePage(submitURL string, referer string, authForm u
 			responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
 
 			return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
-		case strings.Contains(secondActionURL, "challenge/ipp/"): // handle SMS challenge
-
-			var token = prompter.StringRequired("Enter SMS token: G-")
-
-			responseForm.Set("Pin", token)
-			responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
-
-			return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
-
-		case strings.Contains(secondActionURL, "challenge/sk/"): // handle u2f challenge
-			facetComponents, err := url.Parse(secondActionURL)
-			if err != nil {
-				return nil, errors.Wrap(err, "unable to parse action URL for U2F challenge")
-			}
-			facet := facetComponents.Scheme + "://" + facetComponents.Host
-			challengeNonce := responseForm.Get("id-challenge")
-			appID, data := extractKeyHandles(doc, challengeNonce)
-			u2fClient, err := NewU2FClient(challengeNonce, appID, facet, data[0], &U2FDeviceFinder{})
-			if err != nil {
-				return nil, errors.Wrap(err, "Failed to prompt for second factor.")
-			}
-
-			response, err := u2fClient.ChallengeU2F()
-			if err != nil {
-				logger.WithError(err).Error("Second factor failed.")
-				return kc.skipChallengePage(doc, submitURL, secondActionURL, loginDetails)
-			}
-
-			responseForm.Set("id-assertion", response)
-			responseForm.Set("TrustDevice", "on")
-
-			return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
-		case strings.Contains(secondActionURL, "challenge/az/"): // handle phone challenge
-
-			dataAttrs := extractDataAttributes(doc, "div[data-context]", []string{"data-context", "data-gapi-url", "data-tx-id", "data-api-key", "data-tx-lifetime"})
-
-			logger.Debugf("prompt with data values: %+v", dataAttrs)
-
-			waitValues := map[string]string{
-				"txId": dataAttrs["data-tx-id"],
-			}
-
-			log.Println("Open the Google App, and tap 'Yes' on the prompt to sign in")
-
-			_, err := kc.postJSON(fmt.Sprintf("https://content.googleapis.com/cryptauth/v1/authzen/awaittx?alt=json&key=%s", dataAttrs["data-api-key"]), waitValues, submitURL)
-			if err != nil {
-				return nil, errors.Wrap(err, "unable to extract post wait tx form")
-			}
-
-			// responseForm.Set("Pin", token)
-			responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
-
-			return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
-
-		case strings.Contains(secondActionURL, "challenge/dp/"): // handle device push challenge
-			log.Print("Check your phone - after you have confirmed response press ENTER to continue.")
-			_, err := bufio.NewReader(os.Stdin).ReadBytes('\n')
-			if err != nil {
-				return nil, errors.Wrap(err, "error reading new line \\n")
-			}
-			responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
-			return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
-
-		case strings.Contains(secondActionURL, "challenge/skotp/"): // handle one-time HOTP challenge
-			log.Println("Get a one-time code by visiting https://g.co/sc on another device where you can use your security key")
-			var token = prompter.RequestSecurityCode("000 000")
-
-			responseForm.Set("Pin", token)
-			responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
-
-			return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
+		//case strings.Contains(secondActionURL, "challenge/ipp/"): // handle SMS challenge
+		//
+		//	var token = prompter.StringRequired("Enter SMS token: G-")
+		//
+		//	responseForm.Set("Pin", token)
+		//	responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
+		//
+		//	return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
+		//
+		//case strings.Contains(secondActionURL, "challenge/sk/"): // handle u2f challenge
+		//	facetComponents, err := url.Parse(secondActionURL)
+		//	if err != nil {
+		//		return nil, errors.Wrap(err, "unable to parse action URL for U2F challenge")
+		//	}
+		//	facet := facetComponents.Scheme + "://" + facetComponents.Host
+		//	challengeNonce := responseForm.Get("id-challenge")
+		//	appID, data := extractKeyHandles(doc, challengeNonce)
+		//	u2fClient, err := NewU2FClient(challengeNonce, appID, facet, data[0], &U2FDeviceFinder{})
+		//	if err != nil {
+		//		return nil, errors.Wrap(err, "Failed to prompt for second factor.")
+		//	}
+		//
+		//	response, err := u2fClient.ChallengeU2F()
+		//	if err != nil {
+		//		logger.WithError(err).Error("Second factor failed.")
+		//		return kc.skipChallengePage(doc, submitURL, secondActionURL, loginDetails)
+		//	}
+		//
+		//	responseForm.Set("id-assertion", response)
+		//	responseForm.Set("TrustDevice", "on")
+		//
+		//	return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
+		//case strings.Contains(secondActionURL, "challenge/az/"): // handle phone challenge
+		//
+		//	dataAttrs := extractDataAttributes(doc, "div[data-context]", []string{"data-context", "data-gapi-url", "data-tx-id", "data-api-key", "data-tx-lifetime"})
+		//
+		//	logger.Debugf("prompt with data values: %+v", dataAttrs)
+		//
+		//	waitValues := map[string]string{
+		//		"txId": dataAttrs["data-tx-id"],
+		//	}
+		//
+		//	log.Println("Open the Google App, and tap 'Yes' on the prompt to sign in")
+		//
+		//	_, err := kc.postJSON(fmt.Sprintf("https://content.googleapis.com/cryptauth/v1/authzen/awaittx?alt=json&key=%s", dataAttrs["data-api-key"]), waitValues, submitURL)
+		//	if err != nil {
+		//		return nil, errors.Wrap(err, "unable to extract post wait tx form")
+		//	}
+		//
+		//	// responseForm.Set("Pin", token)
+		//	responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
+		//
+		//	return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
+		//
+		//case strings.Contains(secondActionURL, "challenge/dp/"): // handle device push challenge
+		//	log.Print("Check your phone - after you have confirmed response press ENTER to continue.")
+		//	_, err := bufio.NewReader(os.Stdin).ReadBytes('\n')
+		//	if err != nil {
+		//		return nil, errors.Wrap(err, "error reading new line \\n")
+		//	}
+		//	responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
+		//	return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
+		//
+		//case strings.Contains(secondActionURL, "challenge/skotp/"): // handle one-time HOTP challenge
+		//	log.Println("Get a one-time code by visiting https://g.co/sc on another device where you can use your security key")
+		//	var token = prompter.RequestSecurityCode("000 000")
+		//
+		//	responseForm.Set("Pin", token)
+		//	responseForm.Set("TrustDevice", "on") // Don't ask again on this computer
+		//
+		//	return kc.loadResponsePage(secondActionURL, submitURL, responseForm)
 		}
 
 		return kc.skipChallengePage(doc, submitURL, secondActionURL, loginDetails)
